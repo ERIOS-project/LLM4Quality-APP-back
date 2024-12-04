@@ -1,0 +1,262 @@
+{
+    "type": "object",
+    "properties": {
+        "Circuit de prise en charge": {
+            "type": "object",
+            "properties": {
+                "La fluidité et la personnalisation du parcours": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "L’accueil et l’admission": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Le circuit administratif": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "La rapidité de prise en charge et le temps d’attente": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "L’accès au bloc": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "La sortie de l’établissement": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Le suivi du patient après le séjour hospitalier": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Les frais supplémentaires et dépassements d’honoraires": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                }
+            },
+            "required": [
+                "La fluidité et la personnalisation du parcours",
+                "L’accueil et l’admission",
+                "Le circuit administratif",
+                "La rapidité de prise en charge et le temps d’attente",
+                "L’accès au bloc",
+                "La sortie de l’établissement",
+                "Le suivi du patient après le séjour hospitalier",
+                "Les frais supplémentaires et dépassements d’honoraires"
+            ]
+        },
+        "Professionnalisme de l’équipe": {
+            "type": "object",
+            "properties": {
+                "L’information et les explications": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "L’humanité et la disponibilité des professionnels": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Les prises en charges médicales et paramédicales": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Droits des patients": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Gestion de la douleur et médicaments": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Maternité et pédiatrie": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                }
+            },
+            "required": [
+                "L’information et les explications",
+                "L’humanité et la disponibilité des professionnels",
+                "Les prises en charges médicales et paramédicales",
+                "Droits des patients",
+                "Gestion de la douleur et médicaments",
+                "Maternité et pédiatrie"
+            ]
+        },
+        "Qualité hôtelière": {
+            "type": "object",
+            "properties": {
+                "L’accès à l’établissement": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Les locaux et les chambres": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "L’intimité": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Le calme/volume sonore": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "La température de la chambre": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Les repas et collations": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                },
+                "Les services WiFi et TV": {
+                    "type": "object",
+                    "properties": {
+                        "positive": { "type": "string" },
+                        "negative": { "type": "string" },
+                        "neutral": { "type": "string" },
+                        "not mentioned": { "type": "string" }
+                    },
+                    "required": ["positive", "negative", "neutral", "not mentioned"]
+                }
+            },
+            "required": [
+                "L’accès à l’établissement",
+                "Les locaux et les chambres",
+                "L’intimité",
+                "Le calme/volume sonore",
+                "La température de la chambre",
+                "Les repas et collations",
+                "Les services WiFi et TV"
+            ]
+        }
+    },
+    "required": [
+        "Circuit de prise en charge",
+        "Professionnalisme de l’équipe",
+        "Qualité hôtelière"
+    ]
+}

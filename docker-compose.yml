@@ -1,0 +1,48 @@
+services:
+  mongodb-service:
+    image: mongo:latest
+    ports:
+      - "27017:27017"  # Expose MongoDB on port 27017
+    networks:
+      - app-network
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq-service:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"  # RabbitMQ messaging port
+      - "15672:15672"  # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "mongodb-service"
+      - "rabbitmq-service"
+    environment:
+      - MONGO_URI=mongodb://mongo-service:27017/llm_quality
+      - RABBITMQ_HOST=rabbitmq-service
+      - PORT=8080
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

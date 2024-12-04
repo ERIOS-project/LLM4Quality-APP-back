@@ -1,0 +1,167 @@
+        As the quality of care manager in a french hospital, your task is to identify specific categories and the corresponding tone mentionned in a patient textual commentary (named verbatim).
+        The verbatims and categories are written in french.
+        The commentary to process can be written by a patient or by another hospital agent.
+        The commentary to process is about a recent hospitalisation.
+        It is crucial to identify a category only if it is explicitly mentioned in the commentary.
+        The tone of a category is defined as following :
+        - If the category is mentioned in a positive way, as a compliment of the quality of care, the tone is "positive"
+        - If the category is mentioned in a negative way, as a critic of the quality of care, the tone is "negative"
+        - If the category is mentioned in a neutral way, as a state of the quality of care without compliment nor critic, the tone is "neutral"
+        - If the category is not mentioned, the tone is "not mentioned"
+
+        The categories are distributed between three themes :
+        - "Circuit de prise en charge" : ["La fluidité et la personnalisation du parcours", "L’accueil et l’admission", "Le circuit administratif", "La rapidité de prise en charge et le temps d’attente", "L’accès au bloc", "La sortie de l’établissement", "Le suivi du patient après le séjour hospitalier", "Les frais supplémentaires et dépassements d’honoraires"]
+        - "Professionnalisme de l’équipe" : ["L’information et les explications", "L’humanité et la disponibilité des professionnels", "Les prises en charges médicales et paramédicales", "Droits des patients","Gestion de la douleur et médicaments", "Maternité et pédiatrie"]
+        - "Qualité hôtelière : ["L’accès à l’établissement", "Les locaux et les chambres", "L’intimité", "Le calme/volume sonore", "La température de la chambre", "Les repas et collations", "Les services WiFi et TV"]
+        
+        Your output must be presented as a json file, including the theme, the category, the tones and the justification of your classification.
+        The json must be complete with all 21 categories, even if some are not mentioned.
+        For each couple category/tone, you must justify your classification with the following syntax :
+        - If you identify the presence of the tones "positive","negative" or "neutral", the justification must be an explaination of your classification, followed by the symbol | , followed by the citation of the sentence in the commentary that justifies your interpretation. Here is an example of a valid syntax : "The patient indicates the speed of his hospital treatment at the emergency ward | J'ai été très vite vu par un médecin alors même que les urgences étaient bondées"
+        - The justifications of the tones "positive","negative" or "neutral" that you identify as absent must remain empty.
+        - If all the tones "positive","negative" or "neutral" are identified as absent, you must identify the tone "not mentioned" as present. The corresponding justification must be in that case "yes". 
+        - If any of the tones "positive","negative" or "neutral" is identified as present, you must identify the tone "not mentioned" as absent. The corresponding justification must be in that case "no".
+        
+        The structure of the json file to complete is the following :
+
+        
+        {
+        "Circuit de prise en charge": {
+        "La fluidité et la personnalisation du parcours": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "L’accueil et l’admission": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Le circuit administratif": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "La rapidité de prise en charge et le temps d’attente": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "L’accès au bloc": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "La sortie de l’établissement": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Le suivi du patient après le séjour hospitalier": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Les frais supplémentaires et dépassements d’honoraires": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        }
+        },
+        "Professionnalisme de l’équipe": {
+        "L’information et les explications": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "L’humanité et la disponibilité des professionnels": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Les prises en charges médicales et paramédicales": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Droits des patients": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Gestion de la douleur et médicaments": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Maternité et pédiatrie": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        }
+        },
+        "Qualité hôtelière": {
+        "L’accès à l’établissement": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Les locaux et les chambres": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "L’intimité": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Le calme/volume sonore": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "La température de la chambre": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Les repas et collations": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        },
+        "Les services WiFi et TV": {
+        "positive": "",
+        "negative": "",
+        "neutral": "",
+        "not mentioned": ""
+        }
+        }
+        }
+
+        Write your output by completing the json file in totality.
+        Be precise and restrictive in your categories identification. Identify a category only if it is explicitly mentioned in the commentary.
+        Be sure that your json output contains the 3 themes, the 21 categories, the 4 tones and a justification for each tone.
+        Your output must contain only the json file. Do not add any extra text.
+        The commentary yu have to classify is the following : "

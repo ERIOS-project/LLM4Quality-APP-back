@@ -1,0 +1,147 @@
+in this list, the first layer represents the themes, the second layer represents the categories, the third layer represents the elements.
+            The presence of an element implies that you must identify the corresponding category as present.
+            For each couple category/tone, you must justify your classification with the following syntax :
+            - If you identify the presence of the tones "positive","negative" or "neutral", the justification must exactly be the element of the given list that allows the identification of its corresponding category, followed by the symbol | , followed by the citation of the sentence in the commentary that justifies your interpretation. Here is an example of a valid syntax : " Rapidité de prise en charge en situation d’urgence intra hospitalière | J'ai été très vite vu par un médecin alors même que les urgences étaient bondées"
+            - The justifications of the tones "positive","negative" or "neutral" that you identify as absent must remain empty.
+            - If all the tones "positive","negative" or "neutral" are identified as absent, you must identify the tone "not mentioned" as present. The corresponding justification must be in that case "yes". 
+            - If any of the tones "positive","negative" or "neutral" is identified as present, you must identify the tone "not mentioned" as absent. The corresponding justification must be in that case "no".
+
+            Next is an example of a correctly filled json output for the following fictive commentary :
+            'Points positifs : Très bon accueil et prise en charge. Amabilité attention et respect du personnel envers les patients Lors d un appel post opératoire  j ai été bien rassurée et conseillée par l interne du service. Points négatifs : Le lieu de l'intervention n'était pas très  précis pour une personne qui ne connaît  pas l'hôpital.  Les services mentionnés  ne sont pas toujours compréhensibles pour les patients extérieurs.' :
+            
+            {
+            "Circuit de prise en charge": {
+            "La fluidité et la personnalisation du parcours": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "L’accueil et l’admission": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Le circuit administratif": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "La rapidité de prise en charge et le temps d’attente": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "L’accès au bloc": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "La sortie de l’établissement": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Le suivi du patient après le séjour hospitalier": {
+            "positive": "Suivi post-hospitalisation par mail ou téléphone | Lors d'un appel post opératoire j'ai été bien rassurée et conseillée par l'interne du service.",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "no"
+            },
+            "Les frais supplémentaires et dépassements d’honoraires": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            }
+            },
+            "Professionnalisme de l’équipe": {
+            "L’information et les explications": {
+            "positive": "Explications claires et précises relatives à une maladie, un traitement ou un pronostic, délivrées lors d’un appel téléphonique post-hospitalisation avec un médecin. | Lors d'un appel post opératoire j'ai été bien rassurée et conseillée par l'interne du service.",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "no"
+            },
+            "L’humanité et la disponibilité des professionnels": {
+            "positive": "La « gentillesse », la « compassion », la « proximité », la « disponibilité », la « patience », la « passion du travail », le « dévouement », l’écoute  ou « l’empathie » que manifeste le personnel soignant | Amabilité attention et respect du personnel envers les patients.",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "no"
+            },
+            "Les prises en charges médicales et paramédicales": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Droits des patients": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Gestion de la douleur et médicaments": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Maternité et pédiatrie": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            }
+            },
+            "Qualité hôtelière": {
+            "L’accès à l’établissement": {
+            "positive": "",
+            "negative": "Signalétique intra hospitalière et informations sur l’emplacement des différents services | Le lieu de l'intervention n'était pas très précis pour une personne qui ne connaît pas l'hôpital.",
+            "neutral": "",
+            "not mentioned": "no"
+            },
+            "Les locaux et les chambres": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "L’intimité": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Le calme/volume sonore": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "La température de la chambre": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Les repas et collations": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            },
+            "Les services WiFi et TV": {
+            "positive": "",
+            "negative": "",
+            "neutral": "",
+            "not mentioned": "yes"
+            }
+            }
+            }
+
+            Write again your output for the commentary '
