@@ -1,77 +1,82 @@
-from bson import ObjectId
-from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
 from typing import Optional, Dict
-import datetime
+from pydantic import BaseModel, Field, field_serializer
+from bson import ObjectId
+from datetime import datetime
+from enum import Enum
 
 
+# Enum for status
 class Status(str, Enum):
-    SUCCESS = "SUCCESS"
     RUN = "RUN"
+    SUCCESS = "SUCCESS"
     ERROR = "ERROR"
 
 
 class Result(BaseModel):
-    circuit: Dict[str, str] = {
-        "positive": "",
-        "negative": "",
-        "neutral": "",
-        "not mentioned": "",
-    }
-    qualite: Dict[str, str] = {
-        "positive": "",
-        "negative": "",
-        "neutral": "",
-        "not mentioned": "",
-    }
-    professionnalisme: Dict[str, str] = {
-        "positive": "",
-        "negative": "",
-        "neutral": "",
-        "not mentioned": "",
-    }
+    circuit_de_prise_en_charge: Dict[str, Dict[str, int]] = Field(default_factory=dict)
+    professionnalisme_de_l_equipe: Dict[str, Dict[str, int]] = Field(default_factory=dict)
+    qualite_hoteliere: Dict[str, Dict[str, int]] = Field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict):
-        return cls(
-            circuit=data.get("circuit", cls.__fields__["circuit"].default),
-            qualite=data.get("qualite", cls.__fields__["qualite"].default),
-            professionnalisme=data.get(
-                "professionnalisme", cls.__fields__["professionnalisme"].default
-            ),
-        )
+        """
+        Create a Result instance from a dictionary.
+        """
+        return cls(**data)
 
-    def to_dict(self):
-        return self.dict()
+    def to_dict(self) -> dict:
+        """
+        Convert the Result instance to a dictionary.
+        """
+        return self.model_dump()
+
+
+# Custom type for MongoDB ObjectId
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid ObjectId")
+        return ObjectId(v)
 
 
 class Verbatim(BaseModel):
-    id: Optional[str] = Field(alias="_id")  # Pour mapper `_id` de MongoDB
+    id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
     content: str
-    status: Status = Status.RUN
-    result: Optional[Result] = None
+    status: Status 
+    result: Optional[Result]
     year: int
-    created_at: Optional[datetime] = None
+    created_at: Optional[datetime]
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True
-    )  # Permet les types comme datetime et ObjectId
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        populate_by_name = True
+
+    @field_serializer("created_at", when_used="json")
+    def serialize_created_at(self, value: Optional[datetime]) -> Optional[str]:
+        """Serialize `created_at` to an ISO 8601 string."""
+        return value.isoformat() if value else None
 
     @classmethod
     def from_dict(cls, data: dict):
+        """Create a Verbatim instance from a dictionary."""
         return cls(
             id=str(data.get("_id")) if data.get("_id") else None,
             content=data["content"],
             status=data["status"],
-            result=Result.from_dict(data["result"]) if data.get("result") else None,
+            result=data.get("result"),
             year=data["year"],
             created_at=data.get("created_at"),
         )
 
-    def to_dict(self):
-        doc = self.dict(by_alias=True, exclude_unset=True)
-        # Convertir `id` en `_id` pour MongoDB
-        if "id" in doc:
-            doc["_id"] = ObjectId(doc.pop("id"))
+    def to_dict(self) -> dict:
+        """Convert the Verbatim instance to a dictionary."""
+        doc = self.model_dump(by_alias=True, exclude_unset=True)
+        if "_id" in doc:
+            doc["_id"] = str(doc["_id"])
         return doc

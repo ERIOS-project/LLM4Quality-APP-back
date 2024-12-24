@@ -1,18 +1,89 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 from routes.routes import router
 from threading import Thread
 import asyncio
 import json
 from config.config import Config
+from pydantic_settings import BaseSettings
 from controllers.verbatim_controller import VerbatimController
-from models.models import Status
+from models.models import Status,Result,Verbatim
 from fastapi.logger import logger
 from utils.utils import publish_message, consume_messages
 from io import StringIO
+from auth import get_current_user
+
+from dotenv import load_dotenv
 
 # Initialize FastAPI application
-app = FastAPI()
+
+class Settings(BaseSettings):
+    APP_CLIENT_ID: str = ""
+    TENANT_ID: str = ""
+    CLIENT_ID: str = ""
+    CLIENT_SECRET: str = ""
+    AUTHORITY: str = ""
+    API_SCOPE : str = ""
+    SCOPE_DESCRIPTION: str = "user_impersonation"
+
+    # @computed_field
+    @property
+    def SCOPE_NAME(self) -> str:
+        return f'api://{self.APP_CLIENT_ID}/{self.SCOPE_DESCRIPTION}'
+
+    # @computed_field
+    @property
+    def SCOPES(self) -> dict:
+        return {
+            self.SCOPE_NAME: self.SCOPE_DESCRIPTION,
+        }
+
+    # @computed_field
+    @property
+    def OPENAPI_AUTHORIZATION_URL(self) -> str:
+        return f"https://login.microsoftonline.com/{self.TENANT_ID}/oauth2/v2.0/authorize"
+
+    # @computed_field
+    @property
+    def OPENAPI_TOKEN_URL(self) -> str:
+        return f"https://login.microsoftonline.com/{self.TENANT_ID}/oauth2/v2.0/token"
+
+    class Config:
+        env_file = '.env'
+        env_file_encoding = 'utf-8'
+        case_sensitive = True
+
+settings = Settings()
+
+
+async def lifespan(app: FastAPI):
+    # Perform startup tasks
+    await azure_scheme.openid_config.load_config()
+
+    # Start the message consumer thread
+    consumer_thread = Thread(
+        target=consume_messages,
+        args=("worker_responses", handle_worker_response),
+        daemon=True,
+    )
+    consumer_thread.start()
+
+    yield
+
+    # Perform shutdown tasks if necessary
+    # For example, join the consumer thread if it's not daemonized
+    # consumer_thread.join()
+
+app = FastAPI(
+    lifespan=lifespan,
+    swagger_ui_oauth2_redirect_url='/oauth2-redirect',
+    swagger_ui_init_oauth={
+        'usePkceWithAuthorizationCodeGrant': True,
+        'clientId': settings.APP_CLIENT_ID,
+        'scopes': settings.SCOPE_NAME,
+    },
+)
 
 # Configure CORS middleware
 app.add_middleware(
@@ -23,6 +94,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
+    app_client_id=settings.APP_CLIENT_ID,
+    tenant_id=settings.TENANT_ID,
+    scopes=settings.SCOPES,
+)
+
 # Include API routes
 app.include_router(router)
 
@@ -31,13 +108,6 @@ controller = VerbatimController()
 
 # Set of active WebSocket connections
 connected_clients = set()
-
-# TODO: REMOVE THIS
-@app.get("/")
-async def read_root():
-    """Test route for the API"""
-    return {"message": "Hello, World!"}
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -51,18 +121,49 @@ async def websocket_endpoint(websocket: WebSocket):
     connected_clients.add(websocket)
     try:
         while True:
-            data = await websocket.receive_json()
-            action = data.get("action")
+            data = await websocket.receive_text()
+            try:
+                parsed_data = json.loads(data)
+            except json.JSONDecodeError:
+                await websocket.send_json({"error": "Invalid JSON format"})
+                return
 
-            if action == "CSV" and "file" in data:
-                await handle_csv_action(websocket, data["file"])
-            elif action == "RERUN" and "verbatims" in data:
-                await handle_rerun_action(websocket, data["verbatims"])
+            if not isinstance(parsed_data, dict):
+                await websocket.send_json({"error": "Message must be a JSON object"})
+                return None
+
+            if "action" not in parsed_data or not isinstance(parsed_data["action"], str):
+                await websocket.send_json({"error": "Missing or invalid 'action' field"})
+                return None
+
+            if "file" in parsed_data and not isinstance(parsed_data["file"], (str, bytes)):
+                await websocket.send_json(
+                    {"error": "Invalid 'file' field, must be a string or bytes"}
+                )
+                return None
+
+            if "verbatims" in parsed_data:
+                if not isinstance(parsed_data["verbatims"], list) or not all(
+                    isinstance(v, dict) for v in parsed_data["verbatims"]
+                ):
+                    await websocket.send_json(
+                        {"error": "Invalid 'verbatims' field, must be a list of objects"}
+                    )
+                    return None
+
+            action = parsed_data["action"]
+
+            if action == "CSV" and "file" in parsed_data:
+                logger.info(f"Gonna process CSV file")
+                await handle_csv_action(websocket, parsed_data["file"])
+            elif action == "RERUN" and "verbatims" in parsed_data:
+                await handle_rerun_action(websocket, parsed_data["verbatims"])
     except WebSocketDisconnect:
         connected_clients.remove(websocket)
         logger.info(f"WebSocket client disconnected: {websocket.client}")
 
 
+# TODO : REFACTOR TO CONTROLLER
 async def handle_csv_action(websocket: WebSocket, csv_file: str):
     """
     Handle CSV action: process CSV content and publish jobs to RabbitMQ.
@@ -79,7 +180,7 @@ async def handle_csv_action(websocket: WebSocket, csv_file: str):
 
         # Publish each verbatim as a job to RabbitMQ
         for verbatim in verbatims:
-            publish_message("worker_requests", verbatim.dict())
+            publish_message("worker_requests", verbatim.model_dump_json())
 
         await websocket.send_json({"status": "CSV processed", "count": len(verbatims)})
     except Exception as e:
@@ -87,6 +188,7 @@ async def handle_csv_action(websocket: WebSocket, csv_file: str):
         await websocket.send_json({"status": "error", "message": str(e)})
 
 
+# TODO : REFACTOR TO CONTROLLER
 async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
     """
     Handle RERUN action: publish each verbatim as a job to RabbitMQ.
@@ -96,12 +198,37 @@ async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
         verbatims (list): List of verbatim dictionaries.
     """
     try:
-        for verbatim_data in verbatims:
-            publish_message("worker_requests", verbatim_data)
+        existing_verbatims = []
+        non_existing_verbatims = []
 
-        await websocket.send_json(
-            {"status": "RERUN initiated", "count": len(verbatims)}
-        )
+        for verbatim_data in verbatims:
+            try:
+                # Initialize the verbatim model
+                verbatim = Verbatim(**verbatim_data)
+
+                # Check if the verbatim exists in the database
+                if await controller.find_verbatim_by_id(verbatim.id):
+                    existing_verbatims.append(verbatim)
+                else:
+                    non_existing_verbatims.append(verbatim.model_dump())
+            except Exception as e:
+                logger.error(
+                    f"Error processing verbatim data: {verbatim_data}. Error: {e}"
+                )
+                non_existing_verbatims.append(verbatim_data)
+
+        # Publish only existing verbatims
+        for verbatim in existing_verbatims:
+            publish_message("worker_requests", verbatim.model_dump_json())
+
+        # Send the response back to WebSocket
+        response = {
+            "status": "RERUN initiated",
+            "published_count": len(existing_verbatims),
+            "non_existing_count": len(non_existing_verbatims),
+            "non_existing_verbatims": non_existing_verbatims,
+        }
+        await websocket.send_json(response)
     except Exception as e:
         logger.error(f"Error processing RERUN action: {e}")
         await websocket.send_json({"status": "error", "message": str(e)})
@@ -117,39 +244,44 @@ def handle_worker_response(channel, method, properties, body):
         properties: RabbitMQ properties.
         body (bytes): The message body.
     """
+    async def process_response():
+        try:
+            # Decode the RabbitMQ message
+            message = json.loads(body)
+            verbatim_id = message["id"]
+
+            # Convert 'result' en objet Pydantic Result s'il existe
+            result_data = message.get("result")
+            result = Result(**result_data) if result_data else None
+
+            # Mettre à jour MongoDB avec le nouveau statut et le résultat
+            update_success = await controller.update_verbatim_status(
+                verbatim_id=verbatim_id,
+                status=Status.SUCCESS,
+                result=result,  # Passer l'objet Pydantic
+            )
+
+            if update_success:
+                # Notifier tous les clients WebSocket connectés
+                for websocket in connected_clients:
+                    try:
+                        await websocket.send_json(message)
+                    except Exception as e:
+                        logger.error(f"Error sending message to client: {e}")
+                        connected_clients.remove(websocket)
+            else:
+                logger.error(f"Nothing to update for verbatim with id : {verbatim_id}")
+
+        except Exception as e:
+            logger.error(f"Error processing worker response: {e}")
+
+    # Run the coroutine in an event loop
     try:
-        # Decode the RabbitMQ message
-        message = json.loads(body)
-        verbatim_id = message["_id"]
-
-        # Update MongoDB with the new status and result
-        update_success = controller.update_verbatim_status(
-            verbatim_id=verbatim_id,
-            status=Status.SUCCESS,
-            result=message["result"],
-        )
-
-        if update_success:
-            # Notify all connected WebSocket clients
-            for websocket in connected_clients:
-                try:
-                    asyncio.run(websocket.send_json(message))
-                except Exception as e:
-                    logger.error(f"Error sending message to client: {e}")
-                    connected_clients.remove(websocket)
-        else:
-            logger.error(f"Failed to update verbatim with ID: {verbatim_id}")
-    except Exception as e:
-        logger.error(f"Error processing worker response: {e}")
-
-
-async def lifespan(app: FastAPI):
-    Thread(
-        target=consume_messages,
-        args=("worker_responses", handle_worker_response),
-        daemon=True,
-    ).start()
-    yield
+        asyncio.run(process_response())
+    except RuntimeError as e:
+        # If an event loop is already running, use ensure_future
+        loop = asyncio.get_event_loop()
+        loop.create_task(process_response())
 
 
 if __name__ == "__main__":
