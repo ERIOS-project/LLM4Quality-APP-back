@@ -254,10 +254,13 @@ def handle_worker_response(channel, method, properties, body):
             result_data = message.get("result")
             result = Result(**result_data) if result_data else None
 
+            # Get the Status from the verbatim
+            verbatim_status = message.get("status")
+
             # Mettre à jour MongoDB avec le nouveau statut et le résultat
             update_success = await controller.update_verbatim_status(
                 verbatim_id=verbatim_id,
-                status=Status.SUCCESS,
+                status=verbatim_status,
                 result=result,  # Passer l'objet Pydantic
             )
 
