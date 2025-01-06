@@ -219,6 +219,10 @@ async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
 
         # Publish only existing verbatims
         for verbatim in existing_verbatims:
+            # Update the status to 'RUN' before publishing
+            controller.update_verbatim_status(
+                verbatim_id=verbatim.id, status=Status.RUN
+            )
             publish_message("worker_requests", verbatim.model_dump_json())
 
         # Send the response back to WebSocket
@@ -246,16 +250,18 @@ def handle_worker_response(channel, method, properties, body):
     """
     async def process_response():
         try:
+            logger.info(f"Received worker body : {body}")
             # Decode the RabbitMQ message
             message = json.loads(body)
+            logger.info(f"Received worker message (parsed in json) : {message}")
             verbatim_id = message["id"]
-
+            logger.info(f"Received worker response for verbatim : : {message}")
             # Convert 'result' en objet Pydantic Result s'il existe
             result_data = message.get("result")
             result = Result(**result_data) if result_data else None
 
             # Get the Status from the verbatim
-            verbatim_status = message.get("status")
+            verbatim_status = Status(message["status"])
 
             # Mettre à jour MongoDB avec le nouveau statut et le résultat
             update_success = await controller.update_verbatim_status(
