@@ -77,7 +77,7 @@ class VerbatimController:
 
     async def update_verbatim_status(
         self, verbatim_id: str, status: Status, result: Optional[Result | dict]
-    ) -> bool:
+    ) -> dict:
         """
         Update the status and result of a verbatim in MongoDB.
 
@@ -101,7 +101,7 @@ class VerbatimController:
             {"$set": update_data},
         )
 
-        return update_result.modified_count > 0
+        return update_result
 
     async def find_verbatim_by_id(self, verbatim_id: str) -> Optional[Verbatim]:
         """

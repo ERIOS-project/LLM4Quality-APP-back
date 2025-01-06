@@ -220,9 +220,18 @@ async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
         # Publish only existing verbatims
         for verbatim in existing_verbatims:
             # Update the status to 'RUN' before publishing
-            controller.update_verbatim_status(
+            res = controller.update_verbatim_status(
                 verbatim_id=verbatim.id, status=Status.RUN
             )
+            if res.modified_count > 0:
+                logger.info(
+                    f"Updated verbatim {verbatim.id} with status {verbatim.status}"
+                )
+            else:
+                if res.matched_count > 0:
+                    logger.error(f"Nothing to update verbatim {verbatim.id}")
+                else:
+                    logger.error(f"Error verbatim {verbatim.id} not found")
             publish_message("worker_requests", verbatim.model_dump_json())
 
         # Send the response back to WebSocket
@@ -269,18 +278,20 @@ def handle_worker_response(channel, method, properties, body):
                 status=verbatim_status,
                 result=result,  # Passer l'objet Pydantic
             )
-
-            if update_success:
-                # Notifier tous les clients WebSocket connectés
-                for websocket in connected_clients:
-                    try:
-                        await websocket.send_json(message)
-                    except Exception as e:
-                        logger.error(f"Error sending message to client: {e}")
-                        connected_clients.remove(websocket)
+            if update_success.modified_count > 0:
+                logger.info(f"Updated verbatim {verbatim_id} with status {verbatim_status}")
             else:
-                logger.error(f"Nothing to update for verbatim with id : {verbatim_id}")
-
+                if update_success.matched_count > 0:
+                    logger.error(f"Nothing to update verbatim {verbatim_id}")
+                else:
+                    logger.error(f"Error verbatim {verbatim_id} not found")
+            # Notifier tous les clients WebSocket connectés
+            for websocket in connected_clients:
+                try:
+                    await websocket.send_json(message)
+                except Exception as e:
+                    logger.error(f"Error sending message to client: {e}")
+                    connected_clients.remove(websocket)
         except Exception as e:
             logger.error(f"Error processing worker response: {e}")
 
