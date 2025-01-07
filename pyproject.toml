@@ -3,7 +3,7 @@ name = "llm4quality-api"
 version = "0.1.0"
 description = "API for the LLM4Quality ERIOS project"
 authors = ["romain-mezghenna <romain24.mezghenna01@gmail.com>","lilianmnreau <lilian.monnereau@gmail.com>"]
-readme = "README.md"
+readme = ""
 
 # Include the project directory for packaging
 packages = [
