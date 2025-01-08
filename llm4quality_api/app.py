@@ -220,8 +220,8 @@ async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
         # Publish only existing verbatims
         for verbatim in existing_verbatims:
             # Update the status to 'RUN' before publishing
-            res = controller.update_verbatim_status(
-                verbatim_id=verbatim.id, status=Status.RUN
+            res = await controller.update_verbatim_status(
+                verbatim_id=verbatim.id, status=Status.RUN, result=None
             )
             if res.modified_count > 0:
                 logger.info(
