@@ -242,6 +242,7 @@ async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
 
         # Send each verbatim to WebSocket
         for verbatim in existing_verbatims:
+            verbatim.status = Status.RUN
             await websocket.send_json(verbatim.model_dump_json())
     except Exception as e:
         logger.error(f"Error processing RERUN action: {e}")
