@@ -126,21 +126,17 @@ async def websocket_endpoint(websocket: WebSocket):
                 parsed_data = json.loads(data)
             except json.JSONDecodeError:
                 await websocket.send_json({"error": "Invalid JSON format"})
-                return
 
             if not isinstance(parsed_data, dict):
                 await websocket.send_json({"error": "Message must be a JSON object"})
-                return None
 
             if "action" not in parsed_data or not isinstance(parsed_data["action"], str):
                 await websocket.send_json({"error": "Missing or invalid 'action' field"})
-                return None
 
             if "file" in parsed_data and not isinstance(parsed_data["file"], (str, bytes)):
                 await websocket.send_json(
                     {"error": "Invalid 'file' field, must be a string or bytes"}
                 )
-                return None
 
             if "verbatims" in parsed_data:
                 if not isinstance(parsed_data["verbatims"], list) or not all(
@@ -149,7 +145,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_json(
                         {"error": "Invalid 'verbatims' field, must be a list of objects"}
                     )
-                    return None
 
             action = parsed_data["action"]
 
@@ -183,6 +178,8 @@ async def handle_csv_action(websocket: WebSocket, csv_file: str):
             publish_message("worker_requests", verbatim.model_dump_json())
 
         await websocket.send_json({"status": "CSV processed", "count": len(verbatims)})
+        for verbatim in verbatims:
+            await websocket.send_json(verbatim.model_dump_json())
     except Exception as e:
         logger.error(f"Error processing CSV action: {e}")
         await websocket.send_json({"status": "error", "message": str(e)})
@@ -242,6 +239,10 @@ async def handle_rerun_action(websocket: WebSocket, verbatims: list[dict]):
             "non_existing_verbatims": non_existing_verbatims,
         }
         await websocket.send_json(response)
+
+        # Send each verbatim to WebSocket
+        for verbatim in existing_verbatims:
+            await websocket.send_json(verbatim.model_dump_json())
     except Exception as e:
         logger.error(f"Error processing RERUN action: {e}")
         await websocket.send_json({"status": "error", "message": str(e)})
