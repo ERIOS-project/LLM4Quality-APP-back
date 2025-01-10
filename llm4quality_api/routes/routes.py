@@ -3,7 +3,7 @@ from typing import List, Optional
 from bson import ObjectId
 from pydantic import BaseModel
 from controllers.verbatim_controller import VerbatimController
-from models.models import Verbatim
+from models.models import Verbatim, Status
 from auth import get_current_user
 
 # Définir un routeur FastAPI
@@ -24,15 +24,26 @@ async def get_verbatims(
     created_at: Optional[str] = Query(None, description="Filtrer par date de création"),
     user: dict = Depends(get_current_user),
 ):
-    query = {}
-    if year:
-        query["year"] = year
-    if status:
-        query["status"] = status
-    if created_at:
-        query["created_at"] = created_at
-
+    
     try:
+        query = {}
+        if year:
+            # Check if the year is valid
+            if year < 0:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid year: {year}"
+                )
+            query["year"] = year
+        if status:
+            # Check if the status is valid
+            if status not in [s.value for s in Status]:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid status: {status}"
+                )
+            query["status"] = status
+        if created_at:
+            # Check if the date is valid
+            query["created_at"] = created_at
         return await controller.get_verbatims(
             query, pagination=page, per_page=pagination
         )

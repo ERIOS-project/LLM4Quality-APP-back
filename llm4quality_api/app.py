@@ -4,6 +4,7 @@ from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 from routes.routes import router
 from threading import Thread
 import asyncio
+import base64
 import json
 from config.config import Config
 from pydantic_settings import BaseSettings
@@ -165,11 +166,19 @@ async def handle_csv_action(websocket: WebSocket, csv_file: str):
 
     Args:
         websocket (WebSocket): WebSocket instance.
-        csv_file (str): CSV file content as a string.
+        csv_file (bytes): CSV file content as base64 string.
     """
     try:
-        # Split CSV lines and create verbatims
-        lines = StringIO(csv_file).readlines()
+        # Decode base64 to bytes
+        csv_file_bytes = base64.b64decode(csv_file)
+
+        # Decode bytes to string and split into lines
+        csv_content = csv_file_bytes.decode("utf-8")
+        lines = csv_content.splitlines()
+
+        # Remove empty lines and header if needed
+        lines = [line for line in lines if line.strip()]
+
         year = 2024  # Example, adjust based on your requirements
         verbatims = await controller.create_verbatims(lines, year)
 
