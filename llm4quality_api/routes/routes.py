@@ -77,3 +77,11 @@ async def delete_verbatims(
         raise e  # Re-raise validation errors
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint pour obtenir les informations de count de la collection
+@router.get("/count")
+async def get_count(user: dict = Depends(get_current_user)):
+    try:
+        return await controller.get_collection_count()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

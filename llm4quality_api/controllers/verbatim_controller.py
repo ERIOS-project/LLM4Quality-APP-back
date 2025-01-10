@@ -115,3 +115,24 @@ class VerbatimController:
         """
         document = self.collection.find_one({"_id": ObjectId(verbatim_id)})
         return Verbatim.from_dict(document) if document else None
+    
+    async def get_collection_count(self) -> dict:
+        """
+        Get the total number of documents in the verbatims collection.
+
+        Returns:
+            dict: -total: Total number of documents.
+                    -total_run : Total number of documents with status RUN.
+                    -total_success : Total number of documents with status SUCCESS.
+                    -total_error : Total number of documents with status ERROR.
+        """
+        total = self.collection.count_documents({})
+        total_run = self.collection.count_documents({"status": Status.RUN.value})
+        total_success = self.collection.count_documents({"status": Status.SUCCESS.value})
+        total_error = self.collection.count_documents({"status": Status.ERROR.value})
+        return {
+            "total": total,
+            "total_run": total_run,
+            "total_success": total_success,
+            "total_error": total_error,
+        }

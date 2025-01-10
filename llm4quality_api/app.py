@@ -145,13 +145,20 @@ async def websocket_endpoint(websocket: WebSocket):
                 ):
                     await websocket.send_json(
                         {"error": "Invalid 'verbatims' field, must be a list of objects"}
+                        
                     )
+            
+            if "year" in parsed_data and not isinstance(parsed_data["year"], int):
+                await websocket.send_json(
+                    {"error": "Invalid 'year' field, must be an integer"}
+                )
+
 
             action = parsed_data["action"]
 
             if action == "CSV" and "file" in parsed_data:
                 logger.info(f"Gonna process CSV file")
-                await handle_csv_action(websocket, parsed_data["file"])
+                await handle_csv_action(websocket, parsed_data["file"], parsed_data["year"])
             elif action == "RERUN" and "verbatims" in parsed_data:
                 await handle_rerun_action(websocket, parsed_data["verbatims"])
     except WebSocketDisconnect:
@@ -160,7 +167,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 # TODO : REFACTOR TO CONTROLLER
-async def handle_csv_action(websocket: WebSocket, csv_file: str):
+async def handle_csv_action(websocket: WebSocket, csv_file: str, year : int):
     """
     Handle CSV action: process CSV content and publish jobs to RabbitMQ.
 
@@ -179,7 +186,6 @@ async def handle_csv_action(websocket: WebSocket, csv_file: str):
         # Remove empty lines and header if needed
         lines = [line for line in lines if line.strip()]
 
-        year = 2024  # Example, adjust based on your requirements
         verbatims = await controller.create_verbatims(lines, year)
 
         # Publish each verbatim as a job to RabbitMQ
