@@ -1,14 +1,22 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter,WebSocket,WebSocketDisconnect,WebSocketException, HTTPException, Query, Depends
 from typing import List, Optional
 from bson import ObjectId
+import json
 from pydantic import BaseModel
-from controllers.verbatim_controller import VerbatimController
-from models.models import Verbatim, Status
-from auth import get_current_user
+from llm4quality_api.controllers.verbatim_controller import VerbatimController
+from llm4quality_api.models.models import Verbatim, Status
+from llm4quality_api.utils.logger import Logger
+from llm4quality_api.auth import get_current_user
+from llm4quality_api.services.verbatims import handle_csv_action, handle_rerun_action
 
 # Définir un routeur FastAPI
 router = APIRouter()
 
+# Logger instance
+logger = Logger.get_instance().get_logger()
+
+# Set of active WebSocket connections
+connected_clients = set()
 
 # Instanciation du contrôleur
 controller = VerbatimController()
@@ -85,3 +93,68 @@ async def get_count(user: dict = Depends(get_current_user)):
         return await controller.get_collection_count()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for managing live client connections.
+
+    Args:
+        websocket (WebSocket): WebSocket instance.
+    """
+    await websocket.accept()
+    connected_clients.add(websocket)
+    logger.info(f"WebSocket client connected: {websocket.client}")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                parsed_data = json.loads(data)
+            except json.JSONDecodeError:
+                await websocket.send_json({"error": "Invalid JSON format"})
+
+            if not isinstance(parsed_data, dict):
+                await websocket.send_json({"error": "Message must be a JSON object"})
+
+            if "action" not in parsed_data or not isinstance(
+                parsed_data["action"], str
+            ):
+                await websocket.send_json(
+                    {"error": "Missing or invalid 'action' field"}
+                )
+
+            if "file" in parsed_data and not isinstance(
+                parsed_data["file"], (str, bytes)
+            ):
+                await websocket.send_json(
+                    {"error": "Invalid 'file' field, must be a string or bytes"}
+                )
+
+            if "verbatims" in parsed_data:
+                if not isinstance(parsed_data["verbatims"], list) or not all(
+                    isinstance(v, dict) for v in parsed_data["verbatims"]
+                ):
+                    await websocket.send_json(
+                        {
+                            "error": "Invalid 'verbatims' field, must be a list of objects"
+                        }
+                    )
+
+            if "year" in parsed_data and not isinstance(parsed_data["year"], int):
+                await websocket.send_json(
+                    {"error": "Invalid 'year' field, must be an integer"}
+                )
+
+            action = parsed_data["action"]
+
+            if action == "CSV" and "file" in parsed_data:
+                logger.info(f"Gonna process CSV file")
+                await handle_csv_action(
+                    websocket, parsed_data["file"], parsed_data["year"]
+                )
+            elif action == "RERUN" and "verbatims" in parsed_data:
+                await handle_rerun_action(websocket, parsed_data["verbatims"])
+    except WebSocketDisconnect:
+        connected_clients.remove(websocket)
+        logger.info(f"WebSocket client disconnected: {websocket.client}")

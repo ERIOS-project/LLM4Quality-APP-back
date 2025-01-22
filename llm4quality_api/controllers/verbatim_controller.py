@@ -1,15 +1,16 @@
 from pymongo import MongoClient
 from bson import ObjectId
-from models.models import Verbatim, Result, Status
-from config.config import Config
+from llm4quality_api.models.models import Verbatim, Result, Status
+from llm4quality_api.config.config import Config
+from llm4quality_api.db.db import MongoDBClient
 from datetime import datetime, timezone
 from typing import List, Optional
 
 
 class VerbatimController:
     def __init__(self):
-        client = MongoClient(Config.MONGO_URI)
-        self.collection = client.llm4quality.verbatims
+        self.client = MongoDBClient()
+        self.collection = self.client.get_collection("verbatims")
 
     async def create_verbatims(self, lines: List[str], year: int) -> List[Verbatim]:
         """
@@ -115,7 +116,7 @@ class VerbatimController:
         """
         document = self.collection.find_one({"_id": ObjectId(verbatim_id)})
         return Verbatim.from_dict(document) if document else None
-    
+
     async def get_collection_count(self) -> dict:
         """
         Get the total number of documents in the verbatims collection.
