@@ -27,9 +27,8 @@ def handle_worker_response(channel, method, properties, body):
             logger.info(f"Received worker body : {body}")
             # Decode the RabbitMQ message
             message = json.loads(body)
-            logger.info(f"Received worker message (parsed in json) : {message}")
             verbatim_id = message["id"]
-            logger.info(f"Received worker response for verbatim : : {message}")
+            logger.info(f"Received worker response for verbatim : : {verbatim_id}")
             # Convert 'result' en objet Pydantic Result s'il existe
             result_data = message.get("result")
             result = Result(**result_data) if result_data else None
