@@ -27,6 +27,26 @@ async def lifespan(app: FastAPI):
     # consumer_thread.join()
 
 app = FastAPI(
+    title = "LLM4Quality API",
+    description = """
+    L'API LLM4Quality permet d'analyser et de classifier automatiquement des verbatims afin d'améliorer la qualité des soins en milieu hospitalier.
+
+    Verbatims
+
+    - Création et gestion des verbatims.
+    - Suivi des statuts des verbatims en temps réel.
+
+    Classification et Analyse
+
+    - Exécution du pipeline d'analyse basé sur le traitement du langage naturel.
+    - Évaluation de la cohérence des classifications.
+    """,
+    summary = "Une API dédiée à l'analyse des verbatims pour l'amélioration de la qualité des soins.",
+    version = "0.1.0",
+    contact = {
+    "name": "Xavier Corbier",
+    "email": "xavier.corbier@umontpellier.fr",
+    },
     lifespan=lifespan,
     swagger_ui_oauth2_redirect_url="/oauth2-redirect",
     swagger_ui_init_oauth={
