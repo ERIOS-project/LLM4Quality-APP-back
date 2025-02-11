@@ -1,58 +1,62 @@
 from pymongo import MongoClient
 from bson import ObjectId
-from models.models import Verbatim, Result, Status
-from config.config import Config
+from llm4quality_api.models.models import Verbatim, Result, Status
+from llm4quality_api.config.config import Config
+from llm4quality_api.db.db import MongoDBClient
+from datetime import datetime, timezone
 from typing import List, Optional
 
 
 class VerbatimController:
     def __init__(self):
-        client = MongoClient(Config.MONGO_URI)
-        self.collection = client.llm4quality.verbatims
+        self.client = MongoDBClient()
+        self.collection = self.client.get_collection("verbatims")
 
     async def create_verbatims(self, lines: List[str], year: int) -> List[Verbatim]:
         """
-        Crée des verbatims dans MongoDB. MongoDB gère `_id` et `created_at`.
+        Create verbatims in MongoDB.
 
         Args:
-            lines (List[str]): Lignes de contenu des verbatims.
-            year (int): Année associée aux verbatims.
+            lines (List[str]): Lines of content for the verbatims.
+            year (int): Year associated with the verbatims.
 
         Returns:
-            List[Verbatim]: Les verbatims créés.
+            List[Verbatim]: The created verbatims.
         """
         verbatim_dicts = [
             {
                 "content": line.strip(),
-                "status": Status.RUN,
+                "status": Status.RUN.value,  # Convert enum to string
                 "result": None,
                 "year": year,
+                "created_at": datetime.now(timezone.utc),
             }
             for line in lines
         ]
 
-        # Insère plusieurs verbatims à la fois
+        # Insert documents into MongoDB
         result = self.collection.insert_many(verbatim_dicts)
 
-        # Récupère les documents insérés pour inclure `_id` et `created_at`
+        # Fetch inserted documents to include `_id` and `created_at`
         inserted_verbatims = [
-            self.collection.find_one({"_id": oid}) for oid in result.inserted_ids
+            Verbatim.from_dict(self.collection.find_one({"_id": oid}))
+            for oid in result.inserted_ids
         ]
-        return [Verbatim.from_dict(v) for v in inserted_verbatims]
+        return inserted_verbatims
 
     async def get_verbatims(
         self, query: dict, pagination: int = 1, per_page: int = 10
     ) -> List[Verbatim]:
         """
-        Récupère les verbatims en fonction d'une requête avec pagination.
+        Retrieve verbatims based on a query with pagination.
 
         Args:
-            query (dict): Filtre de requête pour MongoDB.
-            pagination (int): Numéro de page (par défaut 1).
-            per_page (int): Nombre de résultats par page (par défaut 10).
+            query (dict): MongoDB query filter.
+            pagination (int): Page number (default is 1).
+            per_page (int): Results per page (default is 10).
 
         Returns:
-            List[Verbatim]: Les verbatims récupérés.
+            List[Verbatim]: The retrieved verbatims.
         """
         skip = (pagination - 1) * per_page
         results = self.collection.find(query).skip(skip).limit(per_page)
@@ -60,53 +64,76 @@ class VerbatimController:
 
     async def delete_verbatims(self, verbatim_ids: List[str]) -> int:
         """
-        Supprime plusieurs verbatims par leurs IDs.
+        Delete multiple verbatims by their IDs.
 
         Args:
-            verbatim_ids (List[str]): Liste des IDs des verbatims à supprimer.
+            verbatim_ids (List[str]): List of verbatim IDs to delete.
 
         Returns:
-            int: Nombre de documents supprimés.
+            int: Number of documents deleted.
         """
         object_ids = [ObjectId(vid) for vid in verbatim_ids]
         result = self.collection.delete_many({"_id": {"$in": object_ids}})
         return result.deleted_count
 
     async def update_verbatim_status(
-        self, verbatim_id: str, status: Status, result: Optional[Result]
-    ) -> bool:
+        self, verbatim_id: str, status: Status, result: Optional[Result | dict]
+    ) -> dict:
         """
-        Met à jour le statut et le résultat d'un verbatim dans MongoDB.
+        Update the status and result of a verbatim in MongoDB.
 
         Args:
-            verbatim_id (str): ID du verbatim à mettre à jour.
-            status (Status): Nouveau statut pour le verbatim (par exemple, "SUCCESS").
-            result (Optional[Result]): Résultat mis à jour pour le verbatim, calculé.
+            verbatim_id (str): ID of the verbatim to update.
+            status (Status): New status for the verbatim.
+            result (Optional[Result | dict]): Updated result for the verbatim.
 
         Returns:
-            bool: True si la mise à jour a réussi, False sinon.
+            bool: True if the update succeeded, False otherwise.
         """
-        update_data = {"status": status}
+        update_data = {"status": status.value}  # Convert enum to string
         if result:
-            update_data["result"] = result.dict()
+            update_data["result"] = (
+                result.dict() if isinstance(result, Result) else result
+            )
 
-        # Met à jour le document dans MongoDB
+        # Update document in MongoDB
         update_result = self.collection.update_one(
             {"_id": ObjectId(verbatim_id)},
             {"$set": update_data},
         )
 
-        return update_result.modified_count > 0
+        return update_result
 
     async def find_verbatim_by_id(self, verbatim_id: str) -> Optional[Verbatim]:
         """
-        Récupère un verbatim unique par son ID.
+        Retrieve a single verbatim by its ID.
 
         Args:
-            verbatim_id (str): ID du verbatim à récupérer.
+            verbatim_id (str): ID of the verbatim to retrieve.
 
         Returns:
-            Optional[Verbatim]: L'objet Verbatim récupéré ou None s'il n'existe pas.
+            Optional[Verbatim]: The retrieved verbatim object or None.
         """
         document = self.collection.find_one({"_id": ObjectId(verbatim_id)})
         return Verbatim.from_dict(document) if document else None
+
+    async def get_collection_count(self) -> dict:
+        """
+        Get the total number of documents in the verbatims collection.
+
+        Returns:
+            dict: -total: Total number of documents.
+                    -total_run : Total number of documents with status RUN.
+                    -total_success : Total number of documents with status SUCCESS.
+                    -total_error : Total number of documents with status ERROR.
+        """
+        total = self.collection.count_documents({})
+        total_run = self.collection.count_documents({"status": Status.RUN.value})
+        total_success = self.collection.count_documents({"status": Status.SUCCESS.value})
+        total_error = self.collection.count_documents({"status": Status.ERROR.value})
+        return {
+            "total": total,
+            "total_run": total_run,
+            "total_success": total_success,
+            "total_error": total_error,
+        }

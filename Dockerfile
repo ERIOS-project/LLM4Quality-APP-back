@@ -1,5 +1,5 @@
 # Use a lightweight Python image
-FROM python:3.13-slim
+FROM python:3.11-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -7,11 +7,20 @@ WORKDIR /app
 # Install Poetry globally
 RUN pip install poetry
 
-# Copy Poetry configuration files
-COPY pyproject.toml poetry.lock ./
+# Remove the cache to avoid conflicts
+RUN poetry cache clear --all pypi
+
+# Copy Poetry configuration file
+COPY pyproject.toml ./
+
+# Vérifier que le package `llm4quality_api` contient une structure minimale
+RUN mkdir -p /app/llm4quality_api && touch /app/llm4quality_api/__init__.py
+
+# Vérifier que le répertoire cible est inclus dans la construction
+RUN ls -la /app/llm4quality_api
 
 # Install project dependencies without dev dependencies
-RUN poetry install --no-dev
+RUN poetry install --only main
 
 # Copy all project files into the container
 COPY . .

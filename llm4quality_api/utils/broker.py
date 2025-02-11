@@ -1,7 +1,7 @@
 import pika
 import json
 import time
-from config.config import Config
+from llm4quality_api.config.config import Config
 
 
 def publish_message(queue, message):
