@@ -29,14 +29,14 @@ services:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - "8080:8080"
+      - "3000:3000"
     depends_on:
       - "mongodb-service"
       - "rabbitmq-service"
     environment:
       - MONGO_URI=mongodb://mongodb-service:27017/llm_quality
       - RABBITMQ_HOST=rabbitmq-service
-      - PORT=8080
+      - PORT=3000
     networks:
       - app-network
 

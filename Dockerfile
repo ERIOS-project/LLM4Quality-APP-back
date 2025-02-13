@@ -25,8 +25,8 @@ RUN poetry install --only main
 # Copy all project files into the container
 COPY . .
 
-# Expose the Flask default port
-EXPOSE 5000
+# Expose the default port
+EXPOSE 3000
 
-# Set the command to run the Flask application
+# Set the command to run the application
 CMD ["poetry", "run", "python", "llm4quality_api/app.py"]
