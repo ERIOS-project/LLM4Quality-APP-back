@@ -7,7 +7,7 @@ from llm4quality_api.config.config import Config
 def publish_message(queue, message):
     """Publish a message to RabbitMQ."""
     connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host=Config.RABBITMQ_HOST)
+        pika.ConnectionParameters(host=Config.RABBITMQ_HOST, port=Config.RABBITMQ_PORT, credentials=pika.PlainCredentials(Config.RABBITMQ_USERNAME, Config.RABBITMQ_PASSWORD))
     )
     channel = connection.channel()
     channel.queue_declare(queue=queue, durable=True)
